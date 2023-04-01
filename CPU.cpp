@@ -94,6 +94,18 @@ vector<int> CPU::decode()
 		cmdArgs[4] = 0;
 	}
 
+	if (src1 == 0x11 && cmdArgs[3] % 2 == 1)
+		throw std::exception("Misalign access!");
+
+	if (src1 == 0x12 && this->R[cmdArgs[3]] % 2 == 1)
+		throw std::exception("Misalign access!");
+
+	if (src2 == 0x11 && cmdArgs[4] % 2 == 1)
+		throw std::exception("Misalign access!");
+
+	if (src2 == 0x12 && this->R[cmdArgs[4]] % 2 == 1)
+		throw std::exception("Misalign access!");
+
 	return cmdArgs;
 }
 
@@ -209,6 +221,7 @@ void CPU::run()
 		catch (std::exception& e)
 		{
 			cout << e.what() << endl;
+			system("pause");
 		}
 	}
 }
@@ -222,7 +235,7 @@ void CPU::add(vector<int> instructionArgs)
 	int src2Value = instructionArgs[4];
 
 	if (src1 == 0x10)
-		throw std::exception("src1 can't be immediate!");
+		throw std::exception("In add instruction src1 can't be immediate!");
 
 	if (src1 < 0x10 && src2 < 0x10)
 	{
@@ -298,7 +311,7 @@ void CPU::sub(vector<int> instructionArgs)
 	int src2Value = instructionArgs[4];
 
 	if (src1 == 0x10)
-		throw std::exception("src1 can't be immediate!");
+		throw std::exception("In sub instruction src1 can't be immediate!");
 
 	if (src1 < 0x10 && src2 < 0x10)
 	{
@@ -507,19 +520,19 @@ void CPU::div(vector<int> instructionArgs)
 	int quotient = 0, remainder = 0;
 
 	if (src2 < 0x10 && this->R[src2 - 1] == 0)
-		throw std::exception("Src2 == 0 not allowed!");
+		throw std::exception("Divide by 0!");
 
 	if (src2 == 0x10 && src2Value == 0)
-		throw std::exception("Src2 == 0 not allowed!");
+		throw std::exception("Divide by 0!");
 
 	if (src2 == 0x11 && this->systemMemory.getValueFromAddress(src2Value) == 0)
-		throw std::exception("Src2 == 0 not allowed!");
+		throw std::exception("Divide by 0!");
 
 	if (src2 == 0x11 && this->systemMemory.getValueFromAddress(src2Value) == 0)
-		throw std::exception("Src2 == 0 not allowed!");
+		throw std::exception("Divide by 0!");
 
 	if (src2 == 0x12 && this->systemMemory.getValueFromAddress(this->R[src2Value - 1]) == 0)
-		throw std::exception("Src2 == 0 not allowed!");
+		throw std::exception("Divide by 0!");
 
 	if (src1 < 0x10 && src2 < 0x10)
 	{
