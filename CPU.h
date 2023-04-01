@@ -48,6 +48,7 @@ class CPU
 
 public:
 	CPU();
+	CPU(string memoryFile);
 
 	Memory& getMemory();
 

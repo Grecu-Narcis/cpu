@@ -27,6 +27,31 @@ CPU::CPU()
 	this->systemMemory.loadMemoryFromFile();
 }
 
+CPU::CPU(string memoryFile)
+{
+	this->reset();
+
+	this->instruction[1] = "add";
+	this->instruction[2] = "sub";
+	this->instruction[3] = "mov";
+	this->instruction[4] = "mul";
+	this->instruction[5] = "div";
+	this->instruction[6] = "cmp";
+	this->instruction[7] = "jmp";
+	this->instruction[9] = "je";
+	this->instruction[10] = "jl";
+	this->instruction[11] = "jg";
+	this->instruction[12] = "jz";
+	this->instruction[13] = "call";
+	this->instruction[14] = "ret";
+	this->instruction[15] = "end_sim";
+	this->instruction[16] = "push";
+	this->instruction[17] = "pop";
+
+	this->systemMemory.setFileName(memoryFile);
+	this->systemMemory.loadMemoryFromFile();
+}
+
 Memory& CPU::getMemory()
 {
 	return this->systemMemory;
@@ -251,8 +276,10 @@ void CPU::run()
 		}
 		catch (std::exception& e)
 		{
+			this->changeConsoleColor(FOREGROUND_RED);
 			cout << e.what() << endl;
-			system("pause");
+			this->changeConsoleColor(15);
+			// system("pause");
 		}
 	}
 }

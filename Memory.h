@@ -17,6 +17,8 @@ public:
 	Memory();
 	Memory(string fileName);
 
+	void setFileName(string fileName);
+
 	void loadMemoryFromFile();
 	int getValueFromAddress(int address);
 	void setMemoryAddress(int address, int value);

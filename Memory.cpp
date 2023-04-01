@@ -5,6 +5,10 @@
 
 int Memory::stringToInt(string stringToConvert)
 {
+	for (int i = 0; i < stringToConvert.size(); i++)
+		if (stringToConvert[i] >= 'A' && stringToConvert[i] <= 'Z')
+			stringToConvert[i] = stringToConvert[i] - 'A' + 'a';
+
 	int value = 0;
 
 	for (int i = stringToConvert.size() - 1, power = 1; i >= 0; i--, power *= 16)
@@ -29,6 +33,11 @@ Memory::Memory(string fileName)
 {
 	this->fileName = fileName;
 	this->currentAddress = 0;
+}
+
+void Memory::setFileName(string fileName)
+{
+	this->fileName = fileName;
 }
 
 void Memory::loadMemoryFromFile()
