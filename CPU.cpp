@@ -272,7 +272,7 @@ void CPU::run()
 			this->execute();
 			this->printCPUStatus(cpuBeforeExecution);
 			
-			Sleep(50);
+			Sleep(100);
 		}
 		catch (std::exception& e)
 		{

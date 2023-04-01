@@ -7,12 +7,12 @@ int main()
 {
 	CPU testCpu;
 
-	 testCpu.run();
+	//testCpu.run();
 
 	/*cout << "\n\nSecond CPU starts running...\n\n";*/
 
-	/*CPU secondTestCpu("demo_errors.txt");
-	secondTestCpu.run();*/
+	CPU secondTestCpu("demo_errors.txt");
+	secondTestCpu.run();
 
 	system("pause");
 
