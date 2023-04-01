@@ -14,6 +14,7 @@
 class CPU
 {
 	uint16_t R[8], IP, SP, stack_base, stack_size;
+
 	uint16_t FLAGS[3];
 
 	Memory systemMemory;
@@ -42,7 +43,8 @@ class CPU
 	
 	int getValueOfArgument(int src, int srcValue);
 
-	void printCPUStatus();
+	void printCPUStatus(CPU cpuBeforeExecution);
+	void changeConsoleColor(int color);
 
 public:
 	CPU();

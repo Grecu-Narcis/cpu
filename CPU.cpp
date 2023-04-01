@@ -106,6 +106,34 @@ vector<int> CPU::decode()
 	if (src2 == 0x12 && this->R[cmdArgs[4]] % 2 == 1)
 		throw std::exception("Misalign access!");
 
+	if (src1 == 0x11 && src2 != 0x0)
+	{
+		this->changeConsoleColor(FOREGROUND_GREEN);
+		printf("Write in memory at address %xh\n\n", cmdArgs[3]);
+		this->changeConsoleColor(15);
+	}
+
+	else if (src1 == 0x12 && src2 != 0x0)
+	{
+		this->changeConsoleColor(FOREGROUND_GREEN);
+		printf("Write in memory at address %xh\n\n", this->R[cmdArgs[3] - 1]);
+		this->changeConsoleColor(15);
+	}
+
+	if (src2 == 0x11)
+	{
+		this->changeConsoleColor(FOREGROUND_GREEN);
+		printf("Read from memory at address %xh\n\n", cmdArgs[4]);
+		this->changeConsoleColor(15);
+	}
+
+	if (src2 == 0x12)
+	{
+		this->changeConsoleColor(FOREGROUND_GREEN);
+		printf("Read from memory at address %xh\n\n", this->R[cmdArgs[4] - 1]);
+		this->changeConsoleColor(15);
+	}
+
 	return cmdArgs;
 }
 
@@ -214,9 +242,12 @@ void CPU::run()
 	{
 		try
 		{
+			CPU cpuBeforeExecution(*this);
+
 			this->execute();
-			this->printCPUStatus();
-			Sleep(10);
+			this->printCPUStatus(cpuBeforeExecution);
+			
+			Sleep(50);
 		}
 		catch (std::exception& e)
 		{
@@ -759,6 +790,10 @@ void CPU::push(int valueToPush)
 	this->SP -= 2;
 
 	this->store(this->SP, valueToPush);
+
+	this->changeConsoleColor(FOREGROUND_GREEN);
+	printf("Pushed to stack the value %xh\nNew stack pointer have value: %xh\n\n", valueToPush, this->SP);
+	this->changeConsoleColor(15);
 }
 
 
@@ -766,6 +801,10 @@ void CPU::pop()
 {
 	this->load(this->SP, this->R[2]);
 	this->SP += 2;
+
+	this->changeConsoleColor(FOREGROUND_GREEN);
+	printf("Poped from stack the value %xh\nNew stack pointer have value: %xh\n\n", this->R[2], this->SP);
+	this->changeConsoleColor(15);
 }
 
 
@@ -790,11 +829,48 @@ int CPU::getValueOfArgument(int src, int srcValue)
 		return this->systemMemory.getValueFromAddress(this->R[srcValue - 1]);
 }
 
-void CPU::printCPUStatus()
+
+void CPU::changeConsoleColor(int color)
+{
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(console, color);
+}
+
+
+void CPU::printCPUStatus(CPU cpuBeforeExecution)
 {
 	printf("Registers:\n");
 	for (int i = 0; i < 8; i++)
-		printf("Register %d: %x\n", i, this->R[i]);
+	{
+		if (this->R[i] != cpuBeforeExecution.R[i])
+			changeConsoleColor(FOREGROUND_GREEN);
+
+		printf("Register %d: %xh\n", i, this->R[i]);
+	
+		changeConsoleColor(15);
+	}
+
+	if (this->IP != cpuBeforeExecution.IP)
+	{
+		changeConsoleColor(FOREGROUND_GREEN);
+		printf("Register IP: %xh\n", this->IP);
+		changeConsoleColor(15);
+	}
+
+	else
+		printf("Register IP: %xh\n", this->IP);
+
+
+	if (this->SP != cpuBeforeExecution.SP)
+	{
+		changeConsoleColor(FOREGROUND_GREEN);
+		printf("Register SP: %xh\n", this->SP);
+		changeConsoleColor(15);
+	}
+
+	else
+		printf("Register SP: %xh\n", this->SP);
+
 
 	printf("\nFlags:\n");
 	printf("Zero Flag: %d\n", this->FLAGS[ZERO_FLAG]);
@@ -802,3 +878,4 @@ void CPU::printCPUStatus()
 	printf("Greater Flag: %d\n", this->FLAGS[GREATER_FLAG]);
 	printf("\n");
 }
+
