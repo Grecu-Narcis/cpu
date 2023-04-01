@@ -5,19 +5,11 @@
 
 int main()
 {
-	/*Memory test("memory.txt");
-	test.loadMemoryFromFile();*/
-
 	CPU testCpu;
 
-	/*vector<int> v = testCpu.decode();
+	testCpu.run();
 
-	for (int i = 0; i < 5; i++)
-		cout << v[i] << endl;*/
-	testCpu.execute();
-	testCpu.execute();
-
-	testCpu.getMemory().printMemory();
+	//testCpu.getMemory().printMemory();
 
 	//test.printMemory();
 

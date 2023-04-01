@@ -1,5 +1,7 @@
 #include "CPU.h"
 #include <iostream>
+#include <stdio.h>
+#include <Windows.h>
 
 CPU::CPU()
 {
@@ -36,10 +38,10 @@ void CPU::reset()
 	for (int i = 0; i < 8; i++)
 		this->R[i] = 0;
 
-	this->SP = 0;
-	this->FLAGS[0] = this->FLAGS[1] = this->FLAGS[2] = 0;
-	this->stack_base = 0;
-	this->stack_size = 0;
+	this->FLAGS[ZERO_FLAG] = this->FLAGS[EQUAL_FLAG] = this->FLAGS[GREATER_FLAG] = 0;
+	this->stack_base = 10000;
+	this->stack_size = 1000;
+	this->SP = this->stack_base + 2;
 
 	this->IP = 0xfff0;
 }
@@ -168,19 +170,22 @@ void CPU::execute()
 
 	if (instructionName == "end_sim")
 	{
+		this->end_sim();
 	}
 
 	if (instructionName == "push")
 	{
+		this->push(decodedInstruction);
 	}
 
 	if (instructionName == "pop")
 	{
+		this->pop();
 	}
 }
 
 
-void CPU::load(int addressInMemory, int& registerToLoad)
+void CPU::load(int addressInMemory, uint16_t& registerToLoad)
 {
 	registerToLoad = this->systemMemory.getValueFromAddress(addressInMemory);
 }
@@ -189,6 +194,23 @@ void CPU::load(int addressInMemory, int& registerToLoad)
 void CPU::store(int addressInMemory, int registerValue)
 {
 	this->systemMemory.setMemoryAddress(addressInMemory, registerValue);
+}
+
+void CPU::run()
+{
+	while (true)
+	{
+		try
+		{
+			this->execute();
+			this->printCPUStatus();
+			Sleep(10);
+		}
+		catch (std::exception& e)
+		{
+			cout << e.what() << endl;
+		}
+	}
 }
 
 
@@ -206,7 +228,7 @@ void CPU::add(vector<int> instructionArgs)
 	{
 		this->R[src1 - 1] += this->R[src2 - 1];
 
-		this->FLAGS[0] = this->R[src1 - 1] == 0;
+		this->FLAGS[ZERO_FLAG] = this->R[src1 - 1] == 0;
 	} 
 
 	else if (src1 < 0x10)
@@ -227,7 +249,7 @@ void CPU::add(vector<int> instructionArgs)
 			this->R[src1 - 1] += valueToAdd;
 		}
 
-		this->FLAGS[0] = this->R[src1 - 1] == 0;
+		this->FLAGS[ZERO_FLAG] = this->R[src1 - 1] == 0;
 	}
 
 	else
@@ -263,7 +285,7 @@ void CPU::add(vector<int> instructionArgs)
 			this->systemMemory.setMemoryAddress(addressFromMemory, newValue);
 		}
 
-		this->FLAGS[0] = this->systemMemory.getValueFromAddress(addressFromMemory) == 0;
+		this->FLAGS[ZERO_FLAG] = this->systemMemory.getValueFromAddress(addressFromMemory) == 0;
 	}
 }
 
@@ -282,7 +304,7 @@ void CPU::sub(vector<int> instructionArgs)
 	{
 		this->R[src1 - 1] -= this->R[src2 - 1];
 
-		this->FLAGS[0] = this->R[src1 - 1] == 0;
+		this->FLAGS[ZERO_FLAG] = this->R[src1 - 1] == 0;
 	}
 
 	else if (src1 < 0x10)
@@ -303,7 +325,7 @@ void CPU::sub(vector<int> instructionArgs)
 			this->R[src1 - 1] -= valueToAdd;
 		}
 
-		this->FLAGS[0] = this->R[src1 - 1] == 0;
+		this->FLAGS[ZERO_FLAG] = this->R[src1 - 1] == 0;
 	}
 
 	else
@@ -339,7 +361,7 @@ void CPU::sub(vector<int> instructionArgs)
 			this->systemMemory.setMemoryAddress(addressFromMemory, newValue);
 		}
 
-		this->FLAGS[0] = this->systemMemory.getValueFromAddress(addressFromMemory) == 0;
+		this->FLAGS[ZERO_FLAG] = this->systemMemory.getValueFromAddress(addressFromMemory) == 0;
 	}
 }
 
@@ -397,13 +419,13 @@ void CPU::mov(vector<int> instructionArgs)
 			this->systemMemory.setMemoryAddress(addressFromMemory, newValue);
 		}
 
-		if (src2 == 0x11)
+		else if (src2 == 0x11)
 		{
 			int newValue = this->systemMemory.getValueFromAddress(src2Value);
 			this->systemMemory.setMemoryAddress(addressFromMemory, newValue);
 		}
 
-		if (src2 == 0x12)
+		else if (src2 == 0x12)
 		{
 			int newValue = this->systemMemory.getValueFromAddress(this->R[src2Value - 1]);
 			this->systemMemory.setMemoryAddress(addressFromMemory, newValue);
@@ -468,7 +490,7 @@ void CPU::mul(vector<int> instructionArgs)
 			result = this->systemMemory.getValueFromAddress(addressFromMemory) * this->systemMemory.getValueFromAddress(this->R[src2Value - 1]);
 	}
 
-	this->FLAGS[0] = result == 0;
+	this->FLAGS[ZERO_FLAG] = result == 0;
 
 	this->R[1] = result & 0xFFFF;
 	this->R[0] = (result >> 16) & 0xFFFF;
@@ -570,7 +592,7 @@ void CPU::div(vector<int> instructionArgs)
 		}
 	}
 
-	this->FLAGS[0] = quotient == 0;
+	this->FLAGS[ZERO_FLAG] = quotient == 0;
 
 	this->R[1] = remainder;
 	this->R[0] = quotient;
@@ -613,19 +635,19 @@ void CPU::cmp(vector<int> instructionArgs)
 
 
 	if (firstArg == secondArg)
-		this->FLAGS[1] = 1;
+		this->FLAGS[EQUAL_FLAG] = 1;
 	else
-		this->FLAGS[1] = 0;
+		this->FLAGS[EQUAL_FLAG] = 0;
 
 	if (firstArg == 0 && secondArg == firstArg)
-		this->FLAGS[0] = 1;
+		this->FLAGS[ZERO_FLAG] = 1;
 	else
-		this->FLAGS[0] = 0;
+		this->FLAGS[ZERO_FLAG] = 0;
 
 	if (firstArg > secondArg)
-		this->FLAGS[2] = 1;
+		this->FLAGS[GREATER_FLAG] = 1;
 	else
-		this->FLAGS[2] = 0;
+		this->FLAGS[GREATER_FLAG] = 0;
 }
 
 
@@ -634,36 +656,136 @@ void CPU::jmp(vector<int> instructionArgs)
 	int src1 = instructionArgs[1];
 	int src1Value = instructionArgs[3];
 
-	//if (src < 0x10)
+	int newIP = this->getValueOfArgument(src1, src1Value);
+
+	this->IP = newIP;
 }
 
 
 void CPU::je(vector<int> instructionArgs)
 {
+	if (this->FLAGS[EQUAL_FLAG] == 0)
+		return;
+
+	this->jmp(instructionArgs);
 }
 
 
 void CPU::jl(vector<int> instructionArgs)
 {
+	if (this->FLAGS[EQUAL_FLAG] == 1 || this->FLAGS[GREATER_FLAG] == 1)
+		return;
+
+	this->jmp(instructionArgs);
 }
 
 
 void CPU::jg(vector<int> instructionArgs)
 {
+	if (this->FLAGS[GREATER_FLAG] == 0)
+		return;
+
+	this->jmp(instructionArgs);
 }
 
 
 void CPU::jz(vector<int> instructionArgs)
 {
+	if (this->FLAGS[ZERO_FLAG] == 0)
+		return;
+
+	this->jmp(instructionArgs);
 }
 
 
 void CPU::call(vector<int> instructionArgs)
 {
+	this->push(this->IP);
+	
+	for (int i = 0; i < 3; i++)
+		this->push(this->FLAGS[i]);
+
+	for (int i = 0; i < 8; i++)
+		this->push(this->R[i] + 2);
+
+	this->jmp(instructionArgs);
 }
 
 
 void CPU::ret(vector<int> instructionArgs)
 {
+	vector<int> argsForMove(5);
+
+	for (int i = 7; i >= 0; i--)
+	{
+		this->pop();
+		
+		this->R[i] = this->R[2];
+	}
+
+	for (int i = 2; i >= 0; i--)
+	{
+		this->pop();
+		this->FLAGS[i] = this->R[2];
+	}
+
+	this->pop();
+	this->IP = this->R[2]; // equivalent to jmp
 }
 
+
+void CPU::push(vector<int> instructionArgs)
+{
+	int valueToPush = this->getValueOfArgument(instructionArgs[1], instructionArgs[3]);
+
+	this->push(valueToPush);
+}
+
+void CPU::push(int valueToPush)
+{
+	this->SP -= 2;
+
+	this->store(this->SP, valueToPush);
+}
+
+
+void CPU::pop()
+{
+	this->load(this->SP, this->R[2]);
+	this->SP += 2;
+}
+
+
+void CPU::end_sim()
+{
+	system("pause");
+	exit(0);
+}
+
+int CPU::getValueOfArgument(int src, int srcValue)
+{
+	if (src < 0x10)
+		return this->R[src - 1];
+
+	else if (src == 0x10)
+		return srcValue;
+
+	else if (src == 0x11)
+		return this->systemMemory.getValueFromAddress(srcValue);
+
+	else
+		return this->systemMemory.getValueFromAddress(this->R[srcValue - 1]);
+}
+
+void CPU::printCPUStatus()
+{
+	printf("Registers:\n");
+	for (int i = 0; i < 8; i++)
+		printf("Register %d: %x\n", i, this->R[i]);
+
+	printf("\nFlags:\n");
+	printf("Zero Flag: %d\n", this->FLAGS[ZERO_FLAG]);
+	printf("Equal Flag: %d\n", this->FLAGS[EQUAL_FLAG]);
+	printf("Greater Flag: %d\n", this->FLAGS[GREATER_FLAG]);
+	printf("\n");
+}

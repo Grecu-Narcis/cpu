@@ -7,13 +7,17 @@
 
 #include "Memory.h"
 
+#define ZERO_FLAG 0
+#define EQUAL_FLAG 1
+#define GREATER_FLAG 2
+
 class CPU
 {
 	uint16_t R[8], IP, SP, stack_base, stack_size;
 	uint16_t FLAGS[3];
 
 	Memory systemMemory;
-	vector<int> cpuStack;
+	// vector<int> cpuStack;
 
 	map<int, string> instruction;
 
@@ -30,8 +34,15 @@ class CPU
 	void jz(vector<int> instructionArgs);
 	void call(vector<int> instructionArgs);
 	void ret(vector<int> instructionArgs);
+	void push(vector<int> instructionArgs);
+	void push(int valueToPush);
+	void pop();
 
+	void end_sim();
+	
+	int getValueOfArgument(int src, int srcValue);
 
+	void printCPUStatus();
 
 public:
 	CPU();
@@ -46,7 +57,9 @@ public:
 
 	void execute();
 
-	void load(int addressInMemory, int& registerToLoad);
+	void load(int addressInMemory, uint16_t& registerToLoad);
 	void store(int addressInMemory, int registerValue);
+
+	void run();
 };
 
