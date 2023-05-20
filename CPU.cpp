@@ -272,8 +272,9 @@ void CPU::run()
 			this->execute();
 			this->printCPUStatus(cpuBeforeExecution);
 			
-			Sleep(100);
+			Sleep(500);
 		}
+
 		catch (std::exception& e)
 		{
 			this->changeConsoleColor(FOREGROUND_RED);
